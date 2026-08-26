@@ -80,7 +80,9 @@ func (c *batchCursor) advance(written int64) error {
 func (c *batchCursor) done() bool { return c.record == len(c.records) }
 
 func (c *batchCursor) reset() {
-	clear(c.records)
+	// Drop the cursor's reference to the batch without mutating it: c.records
+	// aliases the caller's [][]byte backing array, so clear() would nil out
+	// every record visible to a fan-out downstream sink.
 	c.records = nil
 	c.record = 0
 	c.offset = 0
