@@ -1,0 +1,47 @@
+services:
+  minilogback:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: minilogback:local
+    restart: unless-stopped
+    environment:
+      MINILOGBACK_HTTP_ADDR: ":8080"
+      MINILOGBACK_INGEST_ADDR: ":9010"
+      MINILOGBACK_RING_CAPACITY: "65536"
+      MINILOGBACK_BATCH_SIZE: "1024"
+      MINILOGBACK_FLUSH_INTERVAL: "50ms"
+      MINILOGBACK_MAX_EVENT_BYTES: "1048576"
+      MINILOGBACK_AUDIT_MODE: "full"
+      MINILOGBACK_LEASE_TIMEOUT: "2s"
+      MINILOGBACK_AUDIT_INTERVAL: "100ms"
+      MINILOGBACK_SINK: "file"
+      MINILOGBACK_LOG_PATH: "/data/minilogback.log"
+      MINILOGBACK_ROTATE_BYTES: "67108864"
+      MINILOGBACK_SYNC_ON_FLUSH: "false"
+      MINILOGBACK_DEMO_MODE: "true"
+      MINILOGBACK_CONTAINER_MODE: "true"
+      MINILOGBACK_PROJECT_ROOT: "github.com/xavskye/minilogback"
+      MINILOGBACK_WEB_DIR: "/app/frontend/dist"
+      MINILOGBACK_SHUTDOWN_TIMEOUT: "5s"
+    ports:
+      - "127.0.0.1:${MINILOGBACK_HTTP_PORT:-28640}:8080"
+      - "127.0.0.1:${MINILOGBACK_INGEST_PORT:-28641}:9010"
+    volumes:
+      - minilogback-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 5s
+
+volumes:
+  minilogback-data:
