@@ -1,0 +1,17 @@
+.git
+.gitignore
+.alkaid-sop
+.env
+.env.*
+!.env.example
+bin
+coverage
+data
+*.log
+frontend/node_modules
+frontend/dist
+frontend/coverage
+frontend/playwright-report
+frontend/test-results
+docs/QA_Record.md
+
