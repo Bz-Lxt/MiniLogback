@@ -53,18 +53,15 @@ func (s *WriterSink) WriteBatch(ctx context.Context, records [][]byte) error {
 		s.counters.errors.Add(1)
 		return advanceErr
 	}
-	completed := s.pending.done()
-	if completed {
-		s.pending.reset()
-	}
 	if err != nil {
 		s.counters.errors.Add(1)
 		return err
 	}
-	if !completed {
+	if !s.pending.done() {
 		s.counters.errors.Add(1)
 		return io.ErrShortWrite
 	}
+	s.pending.reset()
 	s.counters.batches.Add(1)
 	s.counters.records.Add(uint64(len(records)))
 	return nil
