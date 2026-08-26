@@ -59,12 +59,14 @@ func (d *Dedupe) Do(ctx context.Context, key BatchKey, fn func() error) (duplica
 	d.mu.Lock()
 	delete(d.pending, key)
 	call.err = err
-	element := d.lru.PushFront(completedEntry{key: key})
-	d.completed[key] = element
-	if d.lru.Len() > d.capacity {
-		oldest := d.lru.Back()
-		delete(d.completed, oldest.Value.(completedEntry).key)
-		d.lru.Remove(oldest)
+	if err == nil {
+		element := d.lru.PushFront(completedEntry{key: key})
+		d.completed[key] = element
+		if d.lru.Len() > d.capacity {
+			oldest := d.lru.Back()
+			delete(d.completed, oldest.Value.(completedEntry).key)
+			d.lru.Remove(oldest)
+		}
 	}
 	close(call.done)
 	d.mu.Unlock()
