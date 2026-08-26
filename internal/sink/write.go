@@ -90,13 +90,9 @@ func (c *batchCursor) reset() {
 }
 
 func writeSequential(ctx context.Context, writer io.Writer, records [][]byte) (written int64, shortWrites uint64, err error) {
-	writeContext := ctx
-	cancelWrite := func() {}
-	defer func() { cancelWrite() }()
-	detached := false
 	for _, record := range records {
 		for len(record) > 0 {
-			if err := writeContext.Err(); err != nil {
+			if err := ctx.Err(); err != nil {
 				return written, shortWrites, err
 			}
 			count, writeErr := writer.Write(record)
@@ -108,10 +104,6 @@ func writeSequential(ctx context.Context, writer io.Writer, records [][]byte) (w
 				record = record[count:]
 				if len(record) > 0 {
 					shortWrites++
-					if !detached {
-						writeContext, cancelWrite = continueWriteContext(ctx)
-						detached = true
-					}
 				}
 			}
 			if writeErr != nil {
@@ -126,12 +118,4 @@ func writeSequential(ctx context.Context, writer io.Writer, records [][]byte) (w
 		}
 	}
 	return written, shortWrites, nil
-}
-
-func continueWriteContext(ctx context.Context) (context.Context, context.CancelFunc) {
-	detached := context.WithoutCancel(ctx)
-	if deadline, ok := ctx.Deadline(); ok {
-		return context.WithDeadline(detached, deadline)
-	}
-	return detached, func() {}
 }
