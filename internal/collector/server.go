@@ -161,7 +161,6 @@ func (s *Server) handle(connection net.Conn) {
 		}
 		key := BatchKey{ClientID: batch.Header.ClientID, BatchID: batch.Header.BatchID}
 		ctx, cancel := context.WithTimeout(s.ctx, s.config.SinkTimeout)
-		defer cancel()
 		duplicate, sinkErr := s.dedupe.Do(ctx, key, func() error { return s.sink.WriteBatch(ctx, batch.Records) })
 		status := protocol.StatusAccepted
 		switch {
@@ -174,10 +173,19 @@ func (s *Server) handle(connection net.Conn) {
 		default:
 			s.stats.acceptedBatches.Add(1)
 		}
-		if err := connection.SetWriteDeadline(time.Now().Add(s.config.WriteTimeout)); err != nil {
+		// End the per-batch context once the batch has been processed and the
+		// ACK has been written. An earlier `defer cancel()` was scoped to the
+		// whole handle goroutine, which meant the context only ended when the
+		// TCP connection closed and sinks that release batch handles on context
+		// completion leaked one handle per batch until then.
+		writeErr := connection.SetWriteDeadline(time.Now().Add(s.config.WriteTimeout))
+		if writeErr != nil {
+			cancel()
 			return
 		}
-		if err := protocol.WriteAck(connection, protocol.Ack{Status: status, ClientID: key.ClientID, BatchID: key.BatchID}); err != nil {
+		ackErr := protocol.WriteAck(connection, protocol.Ack{Status: status, ClientID: key.ClientID, BatchID: key.BatchID})
+		cancel()
+		if ackErr != nil {
 			return
 		}
 		if sinkErr != nil {
