@@ -14,13 +14,17 @@ func (s *runtimeState) StartTraffic(_ context.Context, request httpapi.DemoTraff
 		s.demoMu.Unlock()
 		return httpapi.DemoTrafficStatus{}, errors.New("service is closing")
 	}
-	if s.demoCancel != nil {
-		defer func() { s.demoCancel() }()
-	}
+	// Cancel any in-flight traffic generator before starting the new one. A
+	// new context is created unconditionally so the replacement cannot be
+	// cancelled by the prior cancel function.
 	ctx, cancel := context.WithTimeout(s.rootContext, time.Duration(request.DurationSeconds)*time.Second)
+	previous := s.demoCancel
 	s.demoCancel = cancel
 	s.demoWG.Add(1)
 	s.demoMu.Unlock()
+	if previous != nil {
+		previous()
+	}
 	go s.generateTraffic(ctx, request)
 	return httpapi.DemoTrafficStatus{Status: "started", EventsPerSecond: request.EventsPerSecond, DurationSeconds: request.DurationSeconds}, nil
 }
