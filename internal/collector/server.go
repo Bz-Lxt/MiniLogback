@@ -84,7 +84,7 @@ func New(config Config, sink BatchSink, logger *slog.Logger) (*Server, error) {
 		return nil, errors.New("collector sink is required")
 	}
 	if logger == nil {
-		logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+		logger = slog.New(slog.NewTextHandler(io.Discard, nil))
 		logger.Debug("collector default logger initialized")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
