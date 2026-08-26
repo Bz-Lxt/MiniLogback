@@ -83,6 +83,9 @@ func NewClient(config ClientConfig) (*Client, error) {
 }
 
 func (c *Client) Send(ctx context.Context, records [][]byte) error {
+	if c == nil {
+		return net.ErrClosed
+	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.closed {
@@ -178,6 +181,9 @@ func (c *Client) ensureConnection(ctx context.Context) error {
 }
 
 func (c *Client) Close() error {
+	if c == nil {
+		return nil
+	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.closed = true

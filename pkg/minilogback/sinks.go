@@ -52,5 +52,8 @@ func NewNetworkSink(config NetworkSinkConfig) (Sink, error) {
 		limits = protocol.DefaultLimits()
 	}
 	client, err := protocol.NewClient(protocol.ClientConfig{Address: config.Address, ClientID: config.ClientID, DialTimeout: config.DialTimeout, IOTimeout: config.IOTimeout, RetryInitial: config.RetryInitial, RetryMaximum: config.RetryMaximum, MaxAttempts: config.MaxAttempts, Limits: limits})
-	return internalsink.NewNetworkAdapter(client), err
+	if err != nil {
+		return nil, err
+	}
+	return internalsink.NewNetworkAdapter(client), nil
 }
