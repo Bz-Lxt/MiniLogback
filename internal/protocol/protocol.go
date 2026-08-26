@@ -233,7 +233,9 @@ func ReadBatch(r io.Reader, limits Limits) (*Batch, error) {
 			return nil, fmt.Errorf("%w: record %d length out of range", ErrInvalidFrame, i)
 		}
 		next := offset + int(length)
-		records = append(records, payload[offset:next])
+		record := make([]byte, length)
+		copy(record, payload[offset:next])
+		records = append(records, record)
 		offset = next
 	}
 	if offset != len(payload) {
