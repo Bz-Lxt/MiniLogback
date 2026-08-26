@@ -157,14 +157,22 @@ func (s *Sampler) Subscribe(ctx context.Context) (<-chan Snapshot, error) {
 	id := s.nextSubID
 	updates := make(chan Snapshot, 1)
 	s.subscribers[id] = updates
+	// Send the initial snapshot while holding the lock so that a concurrent
+	// broadcast cannot fill the buffered channel first, which would deadlock
+	// this blocking send before the consumer starts draining.
+	updates <- s.Current()
 	s.mu.Unlock()
 
-	updates <- s.Current()
 	go func() {
 		<-ctx.Done()
-		close(updates)
+		// Remove the subscriber and close the channel while holding the lock.
+		// This guarantees broadcast() — which also holds the lock — never
+		// observes a closed channel: either the channel is still in the map
+		// (not yet closed, safe to send) or it has been deleted and closed
+		// (absent from the map, never selected for sending).
 		s.mu.Lock()
 		delete(s.subscribers, id)
+		close(updates)
 		s.mu.Unlock()
 	}()
 	return updates, nil

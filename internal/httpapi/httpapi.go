@@ -185,7 +185,11 @@ func (a *API) metricsStream(w http.ResponseWriter, r *http.Request) {
 		case <-keepalive.C:
 			_, _ = fmt.Fprint(w, ": keepalive\n\n")
 			flusher.Flush()
-		case snapshot := <-updates:
+		case snapshot, ok := <-updates:
+			if !ok {
+				// Subscriber channel was closed by the sampler (client gone).
+				return
+			}
 			payload, marshalErr := json.Marshal(map[string]any{"data": snapshot})
 			if marshalErr != nil {
 				return
