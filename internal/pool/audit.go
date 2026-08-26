@@ -197,7 +197,9 @@ func (r *auditRegistry) snapshotRecord(record *auditRecord, now time.Time) Lease
 		Function:       record.function,
 		File:           record.file,
 		Line:           record.line,
-		Stack:          record.frames,
+		// Copy the frames so callers cannot mutate the registry's internal
+		// slice via the returned snapshot (e.g. in-place redaction).
+		Stack:          append([]Frame(nil), record.frames...),
 		PayloadMutated: record.payloadMutated,
 	}
 }
