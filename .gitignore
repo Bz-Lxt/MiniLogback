@@ -1,0 +1,43 @@
+# Go
+/bin/
+/coverage/
+*.coverprofile
+*.test
+*.out
+
+# Frontend
+/frontend/node_modules/
+/frontend/dist/
+/frontend/coverage/
+/frontend/playwright-report/
+/frontend/test-results/
+
+# Runtime data
+/data/
+*.log
+*.pid
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local tooling caches
+.cache/
+.tmp/
+
+/docs/
+/.alkaid-sop
+/CLAUDE.md
+/AGENTS.md
+/.cursorrules
+/.github/
+/BUG_REPRO.md
+/BUG_INJECT.md
+/defects.md
