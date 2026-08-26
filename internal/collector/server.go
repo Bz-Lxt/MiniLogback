@@ -160,7 +160,7 @@ func (s *Server) handle(connection net.Conn) {
 			return
 		}
 		key := BatchKey{ClientID: batch.Header.ClientID, BatchID: batch.Header.BatchID}
-		ctx, cancel := context.WithTimeout(context.Background(), s.config.SinkTimeout)
+		ctx, cancel := context.WithTimeout(s.ctx, s.config.SinkTimeout)
 		duplicate, sinkErr := s.dedupe.Do(ctx, key, func() error { return s.sink.WriteBatch(ctx, batch.Records) })
 		cancel()
 		status := protocol.StatusAccepted
