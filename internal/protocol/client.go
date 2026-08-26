@@ -157,7 +157,7 @@ func (c *Client) exchange(ctx context.Context, batch *EncodedBatch) error {
 	case StatusAccepted, StatusDuplicate:
 		return nil
 	case StatusInvalid, StatusOverloaded, StatusSinkError:
-		return fmt.Errorf("collector rejected batch: %v", &RemoteError{Status: ack.Status})
+		return fmt.Errorf("collector rejected batch: %w", &RemoteError{Status: ack.Status})
 	default:
 		return fmt.Errorf("%w: unknown ACK status", ErrInvalidFrame)
 	}
